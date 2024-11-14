@@ -1,14 +1,17 @@
 {% extends "base.html" %}
-
+{% block title %}Send Message{% endblock %}
 {% block content %}
-<h2>Send a Message</h2>
+<h1>Send a Message</h1>
 <form method="post">
-    <label for="recipient">Recipient:</label>
-    <input type="text" name="recipient" required>
-    <br>
-    <label for="message">Message:</label>
-    <textarea name="message" required></textarea>
-    <br>
+    <label>Recipient:</label>
+    <select name="recipient" required>
+        {% for user in users %}
+            <option value="{{ user }}">{{ user }}</option>
+        {% endfor %}
+    </select><br>
+    <label>Message:</label><br>
+    <textarea name="message" rows="5" cols="40" required></textarea><br>
     <button type="submit">Send</button>
 </form>
+<p><a href="{{ url_for('inbox') }}">Back to Inbox</a></p>
 {% endblock %}
