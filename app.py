@@ -1,7 +1,19 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from argon2 import PasswordHasher
 
 app = Flask(__name__)
-app.secret_key = ''
+app.secret_key = 'your_secret_key_here'
+
+ph = PasswordHasher()
+
+# Load and save users
+def load_users():
+    # Load users from users.json
+    pass
+
+def save_users(users):
+    # Save users to users.json
+    pass
 
 # Team Member 1: Craig: User Authentication
 @app.route('/')
@@ -10,36 +22,66 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # registration logic
+    # Registration logic
     if request.method == 'POST':
-        # Collect form data and perform registration
-        flash('Registration feature coming soon.')
-        return redirect(url_for('register'))
+        username = request.form['username']
+        password = request.form['password']
+
+        users = load_users()
+        if username in users:
+            flash('Username already exists.')
+            return redirect(url_for('register'))
+
+        password_hash = ph.hash(password)
+        users[username] = {'password_hash': password_hash, 'failed_attempts': 0, 'locked': False}
+        save_users(users)
+
+        flash('Registration successful. Please log in.')
+        return redirect(url_for('login'))
+
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # login logic
+    # Login logic
     if request.method == 'POST':
-        # Collect form data and perform authentication
-        flash('Login feature coming soon.')
-        return redirect(url_for('login'))
+        username = request.form['username']
+        password = request.form['password']
+
+        users = load_users()
+        user = users.get(username)
+
+        if user:
+            if user.get('locked', False):
+                flash('Your account is locked.')
+                return redirect(url_for('login'))
+
+            try:
+                ph.verify(user['password_hash'], password)
+                user['failed_attempts'] = 0
+                save_users(users)
+                session['username'] = username
+                flash('Login successful.')
+                return redirect(url_for('inbox'))
+            except:
+                user['failed_attempts'] += 1
+                if user['failed_attempts'] >= 5:
+                    user['locked'] = True
+                save_users(users)
+                flash('Invalid credentials.')
+                return redirect(url_for('login'))
+        else:
+            flash('Invalid credentials.')
+            return redirect(url_for('login'))
+
     return render_template('login.html')
 
-# Team Member 2: Message Handling
+# other routes
 @app.route('/inbox')
 def inbox():
-    # inbox display
-    flash('Inbox feature coming soon.')
+    flash('Inbox.')
     return render_template('inbox.html')
 
-@app.route('/send', methods=['GET', 'POST'])
-def send_message():
-    #  sending messages
-    if request.method == 'POST':
-        flash('Message sending feature coming soon.')
-        return redirect(url_for('send_message'))
-    return render_template('send.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
