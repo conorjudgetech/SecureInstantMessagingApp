@@ -1,5 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from argon2 import PasswordHasher
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -76,12 +78,53 @@ def login():
 
     return render_template('login.html')
 
-# other routes
+# Team Member 2: Conor: Message Handling
+def load_messages():
+    # load messages from messages.json
+    pass
+
+def save_messages(messages):
+    # save messages to messages.json
+    pass
+
 @app.route('/inbox')
 def inbox():
-    flash('Inbox.')
-    return render_template('inbox.html')
+    # inbox display
+    if 'username' not in session:
+        return redirect(url_for('login'))
 
+    username = session['username']
+    messages = load_messages().get(username, [])
+    return render_template('inbox.html', messages=messages)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.route('/send', methods=['GET', 'POST'])
+def send_message():
+    # sending messages
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        recipient = request.form['recipient']
+        plaintext = request.form['message'].encode()
+
+        # encryption
+        key = b'static_key_32_bytes_long_for_testing!'
+        nonce = os.urandom(12)
+        aesgcm = AESGCM(key)
+        ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+
+        # storing the message
+        messages = load_messages()
+        recipient_messages = messages.get(recipient, [])
+        recipient_messages.append({
+            'sender': session['username'],
+            'ciphertext': ciphertext,
+            'nonce': nonce
+        })
+        messages[recipient] = recipient_messages
+        save_messages(messages)
+
+        flash('Message sent.')
+        return redirect(url_for('inbox'))
+
+    return render_template('send.html')
