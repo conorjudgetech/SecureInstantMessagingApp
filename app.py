@@ -1,14 +1,33 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from argon2 import PasswordHasher
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+import json
 import os
 
-# Team Member 1: Craig: User Registration and Authentication with Account Lockout
+# Craig: User Registration and Authentication with Account Lockout
 from user_authentication import (
     hash_password, verify_password, load_users, save_users,
     increment_failed_attempts, reset_failed_attempts, is_account_locked
 )
 
+# Conor: Symmetric Message Encryption
+from message_encryption import (
+    encrypt_message, decrypt_message
+)
+
+# 3: Secure Key Exchange
+from key_exchange import (
+    generate_ecdh_key_pair, derive_shared_key
+)
+from cryptography.hazmat.primitives.serialization import (
+    Encoding, PublicFormat, PrivateFormat, NoEncryption,
+    load_pem_public_key, load_pem_private_key
+)
+
+# 4: Digital Signatures
+from digital_signature import (
+    generate_signature_key_pair, sign_message, verify_signature
+)
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -75,7 +94,7 @@ def index():
     else:
         return redirect(url_for('login'))
 
-
+# Craig: User Registration with Account Lockout
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
@@ -105,6 +124,7 @@ def register():
             Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
 
+        # Generate signature key pair (Team Member 4)
         sig_private_key, sig_public_key = generate_signature_key_pair()
         # Serialize keys to PEM format
         sig_private_pem = sig_private_key.private_bytes(
@@ -133,7 +153,7 @@ def register():
 
     return render_template('register.html')
 
-# Team Member 1: User Login with Account Lockout
+# Craig: User Login with Account Lockout
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """
@@ -199,34 +219,122 @@ def inbox():
     user_messages = messages.get(username, [])
     return render_template('inbox.html', messages=user_messages)
 
+# Send Message Route (Conor, 3, 4)
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
-    # sending messages
+    """
+    Handles sending messages.
+    """
     if 'username' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        sender = session['username']
         recipient = request.form['recipient']
         plaintext = request.form['message'].encode()
 
-        # encryption
-        key = b'static_key_32_bytes_long_for_testing!'
-        nonce = os.urandom(12)
-        aesgcm = AESGCM(key)
-        ciphertext = aesgcm.encrypt(nonce, plaintext, None)
+        users = load_users()
+        if recipient not in users:
+            flash('Recipient does not exist.')
+            return redirect(url_for('send_message'))
 
-        # storing the message
+        # Load sender's ECDH private key and recipient's ECDH public key
+        sender_ecdh_private_key = load_pem_private_key(
+            users[sender]['ecdh_private_key'].encode('utf-8'),
+            password=None
+        )
+        recipient_ecdh_public_key = load_pem_public_key(
+            users[recipient]['ecdh_public_key'].encode('utf-8')
+        )
+
+        # Derive shared key using ECDH (3)
+        shared_key = derive_shared_key(sender_ecdh_private_key, recipient_ecdh_public_key)
+
+        # Encrypt the message (2)
+        ciphertext, nonce = encrypt_message(plaintext, shared_key)
+
+        # Sign the ciphertext (4)
+        sender_sig_private_key = load_pem_private_key(
+            users[sender]['sig_private_key'].encode('utf-8'),
+            password=None
+        )
+        signature = sign_message(sender_sig_private_key, ciphertext)
+
+        # Load messages
         messages = load_messages()
-        recipient_messages = messages.get(recipient, [])
-        recipient_messages.append({
-            'sender': session['username'],
+
+        # Store the message
+        message_entry = {
+            'sender': sender,
             'ciphertext': ciphertext,
-            'nonce': nonce
-        })
-        messages[recipient] = recipient_messages
+            'nonce': nonce,
+            'signature': signature
+        }
+        messages.setdefault(recipient, []).append(message_entry)
+
+        # Save updated messages data
         save_messages(messages)
 
-        flash('Message sent.')
+        flash('Message sent successfully.')
         return redirect(url_for('inbox'))
 
-    return render_template('send.html')
+    users = load_users()
+    users_list = [user for user in users.keys() if user != session['username']]
+    return render_template('send.html', users=users_list)
+
+# View Message Route (Conor, 3, 4)
+@app.route('/message/<int:msg_id>', methods=['GET'])
+def view_message(msg_id):
+    """
+    Handles viewing messages.
+    """
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    username = session['username']
+    messages = load_messages()
+    user_messages = messages.get(username, [])
+
+    if msg_id < 0 or msg_id >= len(user_messages):
+        flash('Message does not exist.')
+        return redirect(url_for('inbox'))
+
+    message = user_messages[msg_id]
+    sender = message['sender']
+    ciphertext = message['ciphertext']
+    nonce = message['nonce']
+    signature = message['signature']
+
+    users = load_users()
+
+    # Load recipient's ECDH private key and sender's ECDH public key
+    recipient_ecdh_private_key = load_pem_private_key(
+        users[username]['ecdh_private_key'].encode('utf-8'),
+        password=None
+    )
+    sender_ecdh_public_key = load_pem_public_key(
+        users[sender]['ecdh_public_key'].encode('utf-8')
+    )
+
+    # Derive shared key using ECDH (3)
+    shared_key = derive_shared_key(recipient_ecdh_private_key, sender_ecdh_public_key)
+
+    # Verify the signature (4)
+    sender_sig_public_key = load_pem_public_key(
+        users[sender]['sig_public_key'].encode('utf-8')
+    )
+    if not verify_signature(sender_sig_public_key, ciphertext, signature):
+        flash('Signature verification failed.')
+        return redirect(url_for('inbox'))
+
+    # Decrypt the message (Conor)
+    try:
+        plaintext = decrypt_message(ciphertext, nonce, shared_key)
+    except Exception:
+        flash('Message decryption failed.')
+        return redirect(url_for('inbox'))
+
+    return render_template('view_message.html', sender=sender, message=plaintext.decode())
+
+if __name__ == '__main__':
+    app.run(debug=True)
