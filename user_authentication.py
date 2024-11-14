@@ -1,4 +1,4 @@
-# Team Member 1: Craig: User Registration and Authentication with Account Lockout
+# Craig: User Registration and Authentication with Account Lockout
 
 import json
 from argon2 import PasswordHasher
