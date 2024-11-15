@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 import json
+import datetime
 
 # Craig: User Registration and Authentication with Account Lockout
 from user_authentication import (
@@ -15,17 +16,18 @@ from message_encryption import (
 
 # Team Member 3: Secure Key Exchange
 from key_exchange import (
-    generate_ecdh_key_pair, derive_shared_key
+    generate_ecdh_key_pair, generate_ephemeral_key_pair, derive_shared_key
 )
 from cryptography.hazmat.primitives.serialization import (
     Encoding, PublicFormat, PrivateFormat, NoEncryption,
     load_pem_public_key, load_pem_private_key
 )
 
-# Team Member 4: Digital Signatures
+# Team Member 4: Digital Signatures with Certificates and Audit Logging
 from digital_signature import (
     generate_signature_key_pair, sign_message, verify_signature
 )
+from cryptography import x509
 
 # Initialize Flask application
 app = Flask(__name__)
@@ -58,6 +60,8 @@ def load_messages():
                     msg['salt'] = bytes.fromhex(msg['salt'])
                     msg['info'] = bytes.fromhex(msg['info'])
                     msg['signature'] = bytes.fromhex(msg['signature'])
+                    msg['timestamp'] = bytes.fromhex(msg['timestamp'])
+                    msg['ephemeral_public_key'] = msg['ephemeral_public_key']
             return messages
     except (FileNotFoundError, json.JSONDecodeError):
         # Return empty dictionary if file not found or invalid JSON
@@ -78,6 +82,8 @@ def save_messages(messages):
             msg_copy['salt'] = msg_copy['salt'].hex()
             msg_copy['info'] = msg_copy['info'].hex()
             msg_copy['signature'] = msg_copy['signature'].hex()
+            msg_copy['timestamp'] = msg_copy['timestamp'].hex()
+            # Ephemeral public key remains a PEM string
             messages_to_save[user].append(msg_copy)
     with open(MESSAGE_DATA_FILE, 'w') as f:
         json.dump(messages_to_save, f)
@@ -100,7 +106,7 @@ def index():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
-    Handles user registration.
+    Handles user registration with certificate generation.
     """
     if request.method == 'POST':
         username = request.form['username']
@@ -126,15 +132,14 @@ def register():
             Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
 
-        # Generate signature key pair (Team Member 4)
-        sig_private_key, sig_public_key = generate_signature_key_pair()
-        # Serialize keys to PEM format
+        # Generate signature key pair and certificate (Team Member 4)
+        sig_private_key, sig_certificate = generate_signature_key_pair(username)
+        # Serialize private key to PEM format
         sig_private_pem = sig_private_key.private_bytes(
             Encoding.PEM, PrivateFormat.PKCS8, NoEncryption()
         ).decode('utf-8')
-        sig_public_pem = sig_public_key.public_bytes(
-            Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+        # Serialize certificate to PEM format
+        sig_certificate_pem = sig_certificate.public_bytes(Encoding.PEM).decode('utf-8')
 
         # Store user data
         users[username] = {
@@ -144,7 +149,7 @@ def register():
             'ecdh_private_key': ecdh_private_pem,
             'ecdh_public_key': ecdh_public_pem,
             'sig_private_key': sig_private_pem,
-            'sig_public_key': sig_public_pem
+            'sig_certificate': sig_certificate_pem  # Store certificate
         }
 
         # Save updated users data
@@ -225,7 +230,7 @@ def inbox():
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
     """
-    Handles sending messages with ephemeral key exchange.
+    Handles sending messages with ephemeral key exchange and enhanced signatures.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -245,7 +250,7 @@ def send_message():
             users[recipient]['ecdh_public_key'].encode('utf-8')
         )
 
-        # Generate sender's ephemeral ECDH key pair (3)
+        # Generate sender's ephemeral ECDH key pair (Team Member 3)
         ephemeral_private_key, ephemeral_public_key = generate_ephemeral_key_pair()
         # Serialize ephemeral public key to PEM format
         ephemeral_public_pem = ephemeral_public_key.public_bytes(
@@ -259,18 +264,18 @@ def send_message():
         salt = os.urandom(16)
         info = f'{sender}:{recipient}'.encode()
 
-        # Derive per-message key using HKDF (Conor)
+        # Derive per-message key using HKDF (Team Member 2)
         per_message_key = derive_per_message_key(shared_secret, salt, info)
 
-        # Encrypt the message (Conor)
+        # Encrypt the message (Team Member 2)
         ciphertext, nonce = encrypt_message(plaintext, per_message_key)
 
-        # Sign the ciphertext (4)
+        # Sign the ciphertext with timestamp (Team Member 4)
         sender_sig_private_key = load_pem_private_key(
             users[sender]['sig_private_key'].encode('utf-8'),
             password=None
         )
-        signature = sign_message(sender_sig_private_key, ciphertext)
+        signature, timestamp = sign_message(sender_sig_private_key, ciphertext)
 
         # Load messages
         messages = load_messages()
@@ -283,6 +288,7 @@ def send_message():
             'salt': salt,
             'info': info,
             'signature': signature,
+            'timestamp': timestamp,
             'ephemeral_public_key': ephemeral_public_pem  # Include ephemeral public key
         }
         messages.setdefault(recipient, []).append(message_entry)
@@ -301,7 +307,7 @@ def send_message():
 @app.route('/message/<int:msg_id>', methods=['GET'])
 def view_message(msg_id):
     """
-    Handles viewing messages with ephemeral key exchange.
+    Handles viewing messages with ephemeral key exchange and enhanced signatures.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -321,6 +327,7 @@ def view_message(msg_id):
     salt = message['salt']
     info = message['info']
     signature = message['signature']
+    timestamp = message['timestamp']
     ephemeral_public_pem = message['ephemeral_public_key']
 
     users = load_users()
@@ -342,11 +349,13 @@ def view_message(msg_id):
     # Derive per-message key using HKDF (Conor)
     per_message_key = derive_per_message_key(shared_secret, salt, info)
 
-    # Verify the signature (Team Member 4)
-    sender_sig_public_key = load_pem_public_key(
-        users[sender]['sig_public_key'].encode('utf-8')
-    )
-    if not verify_signature(sender_sig_public_key, ciphertext, signature):
+    # Load sender's signature certificate
+    sig_certificate_pem = users[sender]['sig_certificate']
+    sig_certificate = x509.load_pem_x509_certificate(sig_certificate_pem.encode('utf-8'))
+    sender_sig_public_key = sig_certificate.public_key()
+
+    # Verify the signature with timestamp (Team Member 4)
+    if not verify_signature(sender_sig_public_key, ciphertext, signature, timestamp):
         flash('Signature verification failed.')
         return redirect(url_for('inbox'))
 
@@ -358,7 +367,6 @@ def view_message(msg_id):
         return redirect(url_for('inbox'))
 
     return render_template('view_message.html', sender=sender, message=plaintext.decode())
-
 
 if __name__ == '__main__':
     app.run(debug=True)

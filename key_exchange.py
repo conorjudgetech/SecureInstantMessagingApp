@@ -1,4 +1,4 @@
-# 3: Secure Key Exchange with Ephemeral Keys
+# Harsha: Secure Key Exchange with Ephemeral Keys
 
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import (
