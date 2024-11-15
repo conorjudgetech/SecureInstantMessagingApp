@@ -1,4 +1,5 @@
-# key exchange functions
+# Harsha: Secure Key Exchange
+
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.serialization import (
     Encoding, PublicFormat, PrivateFormat, NoEncryption,

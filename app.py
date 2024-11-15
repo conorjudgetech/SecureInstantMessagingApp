@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-from argon2 import PasswordHasher
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-import json
 import os
+import json
 
 # Craig: User Registration and Authentication with Account Lockout
 from user_authentication import (
@@ -10,12 +8,12 @@ from user_authentication import (
     increment_failed_attempts, reset_failed_attempts, is_account_locked
 )
 
-# Conor: Symmetric Message Encryption
+# Conor: Symmetric Message Encryption with Per-Message Key Derivation
 from message_encryption import (
-    encrypt_message, decrypt_message
+    encrypt_message, decrypt_message, derive_per_message_key
 )
 
-# 3: Secure Key Exchange
+# Team Member 3: Secure Key Exchange
 from key_exchange import (
     generate_ecdh_key_pair, derive_shared_key
 )
@@ -24,7 +22,7 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key, load_pem_private_key
 )
 
-# 4: Digital Signatures
+# Team Member 4: Digital Signatures
 from digital_signature import (
     generate_signature_key_pair, sign_message, verify_signature
 )
@@ -37,7 +35,7 @@ app.secret_key = os.urandom(16)  # Secret key for session management
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    # SESSION_COOKIE_SECURE=True  # Uncomment if running 
+    # SESSION_COOKIE_SECURE=True  # Uncomment if running over HTTPS
 )
 
 # File paths for data storage
@@ -57,6 +55,8 @@ def load_messages():
                 for msg in user_msgs:
                     msg['ciphertext'] = bytes.fromhex(msg['ciphertext'])
                     msg['nonce'] = bytes.fromhex(msg['nonce'])
+                    msg['salt'] = bytes.fromhex(msg['salt'])
+                    msg['info'] = bytes.fromhex(msg['info'])
                     msg['signature'] = bytes.fromhex(msg['signature'])
             return messages
     except (FileNotFoundError, json.JSONDecodeError):
@@ -75,6 +75,8 @@ def save_messages(messages):
             msg_copy = msg.copy()
             msg_copy['ciphertext'] = msg_copy['ciphertext'].hex()
             msg_copy['nonce'] = msg_copy['nonce'].hex()
+            msg_copy['salt'] = msg_copy['salt'].hex()
+            msg_copy['info'] = msg_copy['info'].hex()
             msg_copy['signature'] = msg_copy['signature'].hex()
             messages_to_save[user].append(msg_copy)
     with open(MESSAGE_DATA_FILE, 'w') as f:
@@ -219,11 +221,11 @@ def inbox():
     user_messages = messages.get(username, [])
     return render_template('inbox.html', messages=user_messages)
 
-# Send Message Route (Conor, 3, 4)
+# Send Message Route (Conor, Team Members 3 and 4)
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
     """
-    Handles sending messages.
+    Handles sending messages with per-message key derivation.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -247,13 +249,20 @@ def send_message():
             users[recipient]['ecdh_public_key'].encode('utf-8')
         )
 
-        # Derive shared key using ECDH (3)
-        shared_key = derive_shared_key(sender_ecdh_private_key, recipient_ecdh_public_key)
+        # Derive shared secret using ECDH (Team Member 3)
+        shared_secret = derive_shared_key(sender_ecdh_private_key, recipient_ecdh_public_key)
 
-        # Encrypt the message (2)
-        ciphertext, nonce = encrypt_message(plaintext, shared_key)
+        # Generate per-message salt and info
+        salt = os.urandom(16)
+        info = f'{sender}:{recipient}'.encode()
 
-        # Sign the ciphertext (4)
+        # Derive per-message key using HKDF (Conor)
+        per_message_key = derive_per_message_key(shared_secret, salt, info)
+
+        # Encrypt the message (Conor)
+        ciphertext, nonce = encrypt_message(plaintext, per_message_key)
+
+        # Sign the ciphertext (Team Member 4)
         sender_sig_private_key = load_pem_private_key(
             users[sender]['sig_private_key'].encode('utf-8'),
             password=None
@@ -268,6 +277,8 @@ def send_message():
             'sender': sender,
             'ciphertext': ciphertext,
             'nonce': nonce,
+            'salt': salt,
+            'info': info,
             'signature': signature
         }
         messages.setdefault(recipient, []).append(message_entry)
@@ -282,11 +293,11 @@ def send_message():
     users_list = [user for user in users.keys() if user != session['username']]
     return render_template('send.html', users=users_list)
 
-# View Message Route (Conor, 3, 4)
+# View Message Route (Conor, Team Members 3 and 4)
 @app.route('/message/<int:msg_id>', methods=['GET'])
 def view_message(msg_id):
     """
-    Handles viewing messages.
+    Handles viewing messages with per-message key derivation.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -303,6 +314,8 @@ def view_message(msg_id):
     sender = message['sender']
     ciphertext = message['ciphertext']
     nonce = message['nonce']
+    salt = message['salt']
+    info = message['info']
     signature = message['signature']
 
     users = load_users()
@@ -316,10 +329,13 @@ def view_message(msg_id):
         users[sender]['ecdh_public_key'].encode('utf-8')
     )
 
-    # Derive shared key using ECDH (3)
-    shared_key = derive_shared_key(recipient_ecdh_private_key, sender_ecdh_public_key)
+    # Derive shared secret using ECDH (Team Member 3)
+    shared_secret = derive_shared_key(recipient_ecdh_private_key, sender_ecdh_public_key)
 
-    # Verify the signature (4)
+    # Derive per-message key using HKDF (Conor)
+    per_message_key = derive_per_message_key(shared_secret, salt, info)
+
+    # Verify the signature (Team Member 4)
     sender_sig_public_key = load_pem_public_key(
         users[sender]['sig_public_key'].encode('utf-8')
     )
@@ -329,7 +345,7 @@ def view_message(msg_id):
 
     # Decrypt the message (Conor)
     try:
-        plaintext = decrypt_message(ciphertext, nonce, shared_key)
+        plaintext = decrypt_message(ciphertext, nonce, per_message_key)
     except Exception:
         flash('Message decryption failed.')
         return redirect(url_for('inbox'))
