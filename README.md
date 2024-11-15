@@ -8,10 +8,10 @@ Steps:
     • Downloading the ZIP file from the GitHub repository and extracting it.
 
 2. Create a Virtual Environment (Optional but Recommended):
-  # Mac:
+   Mac:
     python -m venv venv
     source venv/bin/activate
-   # Windows:
+   Windows:
    venv|Scripts\activate
    
 4. Install Dependencies:
