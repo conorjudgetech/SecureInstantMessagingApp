@@ -221,11 +221,11 @@ def inbox():
     user_messages = messages.get(username, [])
     return render_template('inbox.html', messages=user_messages)
 
-# Send Message Route (Conor, Team Members 3 and 4)
+# Send Message Route (Conor, 3 and 4)
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
     """
-    Handles sending messages with per-message key derivation.
+    Handles sending messages with ephemeral key exchange.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -240,17 +240,20 @@ def send_message():
             flash('Recipient does not exist.')
             return redirect(url_for('send_message'))
 
-        # Load sender's ECDH private key and recipient's ECDH public key
-        sender_ecdh_private_key = load_pem_private_key(
-            users[sender]['ecdh_private_key'].encode('utf-8'),
-            password=None
-        )
+        # Load recipient's static ECDH public key
         recipient_ecdh_public_key = load_pem_public_key(
             users[recipient]['ecdh_public_key'].encode('utf-8')
         )
 
-        # Derive shared secret using ECDH (Team Member 3)
-        shared_secret = derive_shared_key(sender_ecdh_private_key, recipient_ecdh_public_key)
+        # Generate sender's ephemeral ECDH key pair (3)
+        ephemeral_private_key, ephemeral_public_key = generate_ephemeral_key_pair()
+        # Serialize ephemeral public key to PEM format
+        ephemeral_public_pem = ephemeral_public_key.public_bytes(
+            Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
+        ).decode('utf-8')
+
+        # Derive shared secret using sender's ephemeral private key and recipient's static public key
+        shared_secret = derive_shared_key(ephemeral_private_key, recipient_ecdh_public_key)
 
         # Generate per-message salt and info
         salt = os.urandom(16)
@@ -262,7 +265,7 @@ def send_message():
         # Encrypt the message (Conor)
         ciphertext, nonce = encrypt_message(plaintext, per_message_key)
 
-        # Sign the ciphertext (Team Member 4)
+        # Sign the ciphertext (4)
         sender_sig_private_key = load_pem_private_key(
             users[sender]['sig_private_key'].encode('utf-8'),
             password=None
@@ -279,7 +282,8 @@ def send_message():
             'nonce': nonce,
             'salt': salt,
             'info': info,
-            'signature': signature
+            'signature': signature,
+            'ephemeral_public_key': ephemeral_public_pem  # Include ephemeral public key
         }
         messages.setdefault(recipient, []).append(message_entry)
 
@@ -297,7 +301,7 @@ def send_message():
 @app.route('/message/<int:msg_id>', methods=['GET'])
 def view_message(msg_id):
     """
-    Handles viewing messages with per-message key derivation.
+    Handles viewing messages with ephemeral key exchange.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -317,20 +321,23 @@ def view_message(msg_id):
     salt = message['salt']
     info = message['info']
     signature = message['signature']
+    ephemeral_public_pem = message['ephemeral_public_key']
 
     users = load_users()
 
-    # Load recipient's ECDH private key and sender's ECDH public key
+    # Load recipient's static ECDH private key
     recipient_ecdh_private_key = load_pem_private_key(
         users[username]['ecdh_private_key'].encode('utf-8'),
         password=None
     )
-    sender_ecdh_public_key = load_pem_public_key(
-        users[sender]['ecdh_public_key'].encode('utf-8')
+
+    # Load sender's ephemeral ECDH public key
+    sender_ephemeral_public_key = load_pem_public_key(
+        ephemeral_public_pem.encode('utf-8')
     )
 
-    # Derive shared secret using ECDH (Team Member 3)
-    shared_secret = derive_shared_key(recipient_ecdh_private_key, sender_ecdh_public_key)
+    # Derive shared secret using recipient's private key and sender's ephemeral public key
+    shared_secret = derive_shared_key(recipient_ecdh_private_key, sender_ephemeral_public_key)
 
     # Derive per-message key using HKDF (Conor)
     per_message_key = derive_per_message_key(shared_secret, salt, info)
@@ -351,6 +358,7 @@ def view_message(msg_id):
         return redirect(url_for('inbox'))
 
     return render_template('view_message.html', sender=sender, message=plaintext.decode())
+
 
 if __name__ == '__main__':
     app.run(debug=True)
