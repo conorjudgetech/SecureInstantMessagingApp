@@ -1,4 +1,4 @@
-# Sid: Digital Signatures with Certificates and Audit Logging
+# Siddarth: Digital Signatures with Certificates and Audit Logging
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PrivateKey, Ed25519PublicKey
@@ -39,7 +39,7 @@ def generate_signature_key_pair(username):
     cert_builder = cert_builder.add_extension(
         BasicConstraints(ca=False, path_length=None), critical=True,
     )
-    certificate = cert_builder.sign(private_key, hashes.SHA256())
+    certificate = cert_builder.sign(private_key, algorithm=None)
 
     return private_key, certificate
 

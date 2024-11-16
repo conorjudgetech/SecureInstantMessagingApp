@@ -14,7 +14,7 @@ from message_encryption import (
     encrypt_message, decrypt_message, derive_per_message_key
 )
 
-# Team Member 3: Secure Key Exchange
+# Harsha: Secure Key Exchange
 from key_exchange import (
     generate_ecdh_key_pair, generate_ephemeral_key_pair, derive_shared_key
 )
@@ -23,7 +23,7 @@ from cryptography.hazmat.primitives.serialization import (
     load_pem_public_key, load_pem_private_key
 )
 
-# Team Member 4: Digital Signatures with Certificates and Audit Logging
+# Siddarth: Digital Signatures with Certificates and Audit Logging
 from digital_signature import (
     generate_signature_key_pair, sign_message, verify_signature
 )
@@ -226,7 +226,7 @@ def inbox():
     user_messages = messages.get(username, [])
     return render_template('inbox.html', messages=user_messages)
 
-# Send Message Route (Conor, 3 and 4)
+# Send Message Route (Conor, Harsha, Siddarth)
 @app.route('/send', methods=['GET', 'POST'])
 def send_message():
     """
@@ -250,7 +250,7 @@ def send_message():
             users[recipient]['ecdh_public_key'].encode('utf-8')
         )
 
-        # Generate sender's ephemeral ECDH key pair (Team Member 3)
+        # Generate sender's ephemeral ECDH key pair (Harsha)
         ephemeral_private_key, ephemeral_public_key = generate_ephemeral_key_pair()
         # Serialize ephemeral public key to PEM format
         ephemeral_public_pem = ephemeral_public_key.public_bytes(
@@ -264,13 +264,13 @@ def send_message():
         salt = os.urandom(16)
         info = f'{sender}:{recipient}'.encode()
 
-        # Derive per-message key using HKDF (Team Member 2)
+        # Derive per-message key using HKDF (Conor)
         per_message_key = derive_per_message_key(shared_secret, salt, info)
 
-        # Encrypt the message (Team Member 2)
+        # Encrypt the message (Conor)
         ciphertext, nonce = encrypt_message(plaintext, per_message_key)
 
-        # Sign the ciphertext with timestamp (Team Member 4)
+        # Sign the ciphertext with timestamp (Siddarth)
         sender_sig_private_key = load_pem_private_key(
             users[sender]['sig_private_key'].encode('utf-8'),
             password=None
@@ -303,7 +303,7 @@ def send_message():
     users_list = [user for user in users.keys() if user != session['username']]
     return render_template('send.html', users=users_list)
 
-# View Message Route (Conor, Team Members 3 and 4)
+# View Message Route (Conor, Harsha, Siddarth)
 @app.route('/message/<int:msg_id>', methods=['GET'])
 def view_message(msg_id):
     """
@@ -354,7 +354,7 @@ def view_message(msg_id):
     sig_certificate = x509.load_pem_x509_certificate(sig_certificate_pem.encode('utf-8'))
     sender_sig_public_key = sig_certificate.public_key()
 
-    # Verify the signature with timestamp (Team Member 4)
+    # Verify the signature with timestamp (Siddarth)
     if not verify_signature(sender_sig_public_key, ciphertext, signature, timestamp):
         flash('Signature verification failed.')
         return redirect(url_for('inbox'))
