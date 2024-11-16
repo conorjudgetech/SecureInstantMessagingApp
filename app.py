@@ -61,7 +61,7 @@ def load_messages():
                     msg['info'] = bytes.fromhex(msg['info'])
                     msg['signature'] = bytes.fromhex(msg['signature'])
                     msg['timestamp'] = bytes.fromhex(msg['timestamp'])
-                    msg['ephemeral_public_key'] = msg['ephemeral_public_key']
+                    # Ephemeral public key remains a PEM string
             return messages
     except (FileNotFoundError, json.JSONDecodeError):
         # Return empty dictionary if file not found or invalid JSON
@@ -122,7 +122,7 @@ def register():
         # Hash the password
         password_hash = hash_password(password)
 
-        # Generate ECDH key pair (Team Member 3)
+        # Generate ECDH key pair (Harsha)
         ecdh_private_key, ecdh_public_key = generate_ecdh_key_pair()
         # Serialize keys to PEM format
         ecdh_private_pem = ecdh_private_key.private_bytes(
@@ -132,7 +132,7 @@ def register():
             Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
         ).decode('utf-8')
 
-        # Generate signature key pair and certificate (Team Member 4)
+        # Generate signature key pair and certificate (Siddarth)
         sig_private_key, sig_certificate = generate_signature_key_pair(username)
         # Serialize private key to PEM format
         sig_private_pem = sig_private_key.private_bytes(
@@ -245,37 +245,71 @@ def send_message():
             flash('Recipient does not exist.')
             return redirect(url_for('send_message'))
 
-        # Load recipient's static ECDH public key
-        recipient_ecdh_public_key = load_pem_public_key(
-            users[recipient]['ecdh_public_key'].encode('utf-8')
-        )
+        try:
+            # Load recipient's static ECDH public key
+            recipient_ecdh_public_key = load_pem_public_key(
+                users[recipient]['ecdh_public_key'].encode('utf-8')
+            )
+        except ValueError as e:
+            flash('Failed to load recipient\'s public key. Cannot send message.')
+            app.logger.error(f"Failed to load recipient's ECDH public key: {e}")
+            return redirect(url_for('send_message'))
+        except Exception as e:
+            flash('An unexpected error occurred while loading recipient\'s public key.')
+            app.logger.error(f"Unexpected error loading recipient's ECDH public key: {e}")
+            return redirect(url_for('send_message'))
 
-        # Generate sender's ephemeral ECDH key pair (Harsha)
-        ephemeral_private_key, ephemeral_public_key = generate_ephemeral_key_pair()
-        # Serialize ephemeral public key to PEM format
-        ephemeral_public_pem = ephemeral_public_key.public_bytes(
-            Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+        try:
+            # Generate sender's ephemeral ECDH key pair (Harsha)
+            ephemeral_private_key, ephemeral_public_key = generate_ephemeral_key_pair()
+            # Serialize ephemeral public key to PEM format
+            ephemeral_public_pem = ephemeral_public_key.public_bytes(
+                Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
+            ).decode('utf-8')
+        except Exception as e:
+            flash('Failed to generate ephemeral key pair.')
+            app.logger.error(f"Failed to generate ephemeral ECDH key pair: {e}")
+            return redirect(url_for('send_message'))
 
-        # Derive shared secret using sender's ephemeral private key and recipient's static public key
-        shared_secret = derive_shared_key(ephemeral_private_key, recipient_ecdh_public_key)
+        try:
+            # Derive shared secret using sender's ephemeral private key and recipient's static public key
+            shared_secret = derive_shared_key(ephemeral_private_key, recipient_ecdh_public_key)
+        except Exception as e:
+            flash('Failed to derive shared secret.')
+            app.logger.error(f"Failed to derive shared secret: {e}")
+            return redirect(url_for('send_message'))
 
-        # Generate per-message salt and info
-        salt = os.urandom(16)
-        info = f'{sender}:{recipient}'.encode()
+        try:
+            # Generate per-message salt and info
+            salt = os.urandom(16)
+            info = f'{sender}:{recipient}'.encode()
 
-        # Derive per-message key using HKDF (Conor)
-        per_message_key = derive_per_message_key(shared_secret, salt, info)
+            # Derive per-message key using HKDF (Conor)
+            per_message_key = derive_per_message_key(shared_secret, salt, info)
+        except Exception as e:
+            flash('Failed to derive per-message encryption key.')
+            app.logger.error(f"Failed to derive per-message key: {e}")
+            return redirect(url_for('send_message'))
 
-        # Encrypt the message (Conor)
-        ciphertext, nonce = encrypt_message(plaintext, per_message_key)
+        try:
+            # Encrypt the message (Conor)
+            ciphertext, nonce = encrypt_message(plaintext, per_message_key)
+        except Exception as e:
+            flash('Failed to encrypt the message.')
+            app.logger.error(f"Encryption failed: {e}")
+            return redirect(url_for('send_message'))
 
-        # Sign the ciphertext with timestamp (Siddarth)
-        sender_sig_private_key = load_pem_private_key(
-            users[sender]['sig_private_key'].encode('utf-8'),
-            password=None
-        )
-        signature, timestamp = sign_message(sender_sig_private_key, ciphertext)
+        try:
+            # Sign the ciphertext with timestamp (Siddarth)
+            sender_sig_private_key = load_pem_private_key(
+                users[sender]['sig_private_key'].encode('utf-8'),
+                password=None
+            )
+            signature, timestamp = sign_message(sender_sig_private_key, ciphertext)
+        except Exception as e:
+            flash('Failed to sign the message.')
+            app.logger.error(f"Signing failed: {e}")
+            return redirect(url_for('send_message'))
 
         # Load messages
         messages = load_messages()
@@ -332,38 +366,91 @@ def view_message(msg_id):
 
     users = load_users()
 
-    # Load recipient's static ECDH private key
-    recipient_ecdh_private_key = load_pem_private_key(
-        users[username]['ecdh_private_key'].encode('utf-8'),
-        password=None
-    )
-
-    # Load sender's ephemeral ECDH public key
-    sender_ephemeral_public_key = load_pem_public_key(
-        ephemeral_public_pem.encode('utf-8')
-    )
-
-    # Derive shared secret using recipient's private key and sender's ephemeral public key
-    shared_secret = derive_shared_key(recipient_ecdh_private_key, sender_ephemeral_public_key)
-
-    # Derive per-message key using HKDF (Conor)
-    per_message_key = derive_per_message_key(shared_secret, salt, info)
-
-    # Load sender's signature certificate
-    sig_certificate_pem = users[sender]['sig_certificate']
-    sig_certificate = x509.load_pem_x509_certificate(sig_certificate_pem.encode('utf-8'))
-    sender_sig_public_key = sig_certificate.public_key()
-
-    # Verify the signature with timestamp (Siddarth)
-    if not verify_signature(sender_sig_public_key, ciphertext, signature, timestamp):
-        flash('Signature verification failed.')
+    try:
+        # Load recipient's static ECDH private key
+        recipient_ecdh_private_key = load_pem_private_key(
+            users[username]['ecdh_private_key'].encode('utf-8'),
+            password=None
+        )
+    except Exception as e:
+        flash('Failed to load your ECDH private key.')
+        app.logger.error(f"Failed to load recipient's ECDH private key: {e}")
         return redirect(url_for('inbox'))
 
-    # Decrypt the message (Conor)
     try:
+        # Load sender's ephemeral ECDH public key
+        sender_ephemeral_public_key = load_pem_public_key(
+            ephemeral_public_pem.encode('utf-8')
+        )
+    except ValueError as e:
+        flash('Failed to load sender\'s public key. The message may have been tampered with.')
+        app.logger.error(f"Failed to load sender's ephemeral public key: {e}")
+        return redirect(url_for('inbox'))
+    except Exception as e:
+        flash('An unexpected error occurred while loading sender\'s public key.')
+        app.logger.error(f"Unexpected error loading sender's ECDH public key: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Derive shared secret using recipient's private key and sender's ephemeral public key
+        shared_secret = derive_shared_key(recipient_ecdh_private_key, sender_ephemeral_public_key)
+    except Exception as e:
+        flash('Failed to derive shared secret.')
+        app.logger.error(f"Failed to derive shared secret: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Derive per-message key using HKDF (Conor)
+        per_message_key = derive_per_message_key(shared_secret, salt, info)
+    except Exception as e:
+        flash('Failed to derive per-message encryption key.')
+        app.logger.error(f"Failed to derive per-message key: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Load sender's signature certificate
+        sig_certificate_pem = users[sender]['sig_certificate']
+        sig_certificate = x509.load_pem_x509_certificate(sig_certificate_pem.encode('utf-8'))
+        sender_sig_public_key = sig_certificate.public_key()
+    except Exception as e:
+        flash('Failed to load sender\'s signature certificate.')
+        app.logger.error(f"Failed to load sender's signature certificate: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Verify the signature with timestamp (Siddarth)
+        if not verify_signature(sender_sig_public_key, ciphertext, signature, timestamp):
+            flash('Signature verification failed.')
+            return redirect(url_for('inbox'))
+    except Exception as e:
+        flash('An error occurred during signature verification.')
+        app.logger.error(f"Signature verification error: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Check if the message timestamp is within an acceptable time window (e.g., 5 minutes)
+        message_time = datetime.datetime.fromisoformat(timestamp.decode())
+        current_time = datetime.datetime.utcnow()
+        time_difference = current_time - message_time
+
+        if time_difference.total_seconds() > 300:  # 5 minutes
+            flash('Message is outdated or replayed.')
+            return redirect(url_for('inbox'))
+    except ValueError as e:
+        flash('Invalid message timestamp.')
+        app.logger.error(f"Invalid message timestamp: {e}")
+        return redirect(url_for('inbox'))
+    except Exception as e:
+        flash('An unexpected error occurred while processing the message timestamp.')
+        app.logger.error(f"Unexpected error processing timestamp: {e}")
+        return redirect(url_for('inbox'))
+
+    try:
+        # Decrypt the message (Conor)
         plaintext = decrypt_message(ciphertext, nonce, per_message_key)
-    except Exception:
+    except Exception as e:
         flash('Message decryption failed.')
+        app.logger.error(f"Decryption failed: {e}")
         return redirect(url_for('inbox'))
 
     return render_template('view_message.html', sender=sender, message=plaintext.decode())
