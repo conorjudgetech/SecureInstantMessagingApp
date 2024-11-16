@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import logging
 import os
 import json
 import datetime
+import logging
 
 # Craig: User Registration and Authentication with Account Lockout
 from user_authentication import (
@@ -41,7 +41,7 @@ app.config.update(
     # SESSION_COOKIE_SECURE=True  # Uncomment if running over HTTPS
 )
 
-# Set up logging for application errors
+# Set up logging
 logging.basicConfig(
     filename='app.log',
     level=logging.ERROR,
@@ -56,14 +56,18 @@ def load_messages():
     """
     Load messages from the JSON file.
     Returns a dictionary of messages.
+    Handles corrupted message fields gracefully by skipping invalid messages.
     """
     try:
         with open(MESSAGE_DATA_FILE, 'r') as f:
             messages = json.load(f)
-            # Convert hex-encoded fields back to bytes where necessary
+            # Initialize a new dictionary to store valid messages
+            valid_messages = {}
             for user, user_msgs in messages.items():
+                valid_user_msgs = []
                 for msg in user_msgs:
                     try:
+                        # Attempt to convert hex strings to bytes
                         msg['ciphertext'] = bytes.fromhex(msg['ciphertext'])
                         msg['nonce'] = bytes.fromhex(msg['nonce'])
                         msg['salt'] = bytes.fromhex(msg['salt'])
@@ -71,11 +75,14 @@ def load_messages():
                         msg['signature'] = bytes.fromhex(msg['signature'])
                         msg['timestamp'] = bytes.fromhex(msg['timestamp'])
                         # Ephemeral public key remains a PEM string
-                    except Exception as e:
-                        logging.error(f"Failed to deserialize message from {msg.get('sender', 'Unknown')} to {user}: {e}")
-                        # Optionally, mark the message as corrupted or skip
-                        msg['corrupted'] = True
-            return messages
+                        valid_user_msgs.append(msg)
+                    except ValueError as ve:
+                        # Log the error and skip the corrupted message
+                        sender = msg.get('sender', 'Unknown')
+                        logging.error(f"Corrupted message from {sender}: {ve}")
+                        continue
+                valid_messages[user] = valid_user_msgs
+            return valid_messages
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.error(f"Failed to load messages: {e}")
         # Return empty dictionary if file not found or invalid JSON
@@ -93,13 +100,13 @@ def save_messages(messages):
             for msg in user_msgs:
                 try:
                     msg_copy = msg.copy()
-                    # Convert bytes to hex, leave strings as is
-                    for key in ['ciphertext', 'nonce', 'salt', 'info', 'signature', 'timestamp']:
-                        if isinstance(msg_copy[key], bytes):
-                            msg_copy[key] = msg_copy[key].hex()
+                    msg_copy['ciphertext'] = msg_copy['ciphertext'].hex()
+                    msg_copy['nonce'] = msg_copy['nonce'].hex()
+                    msg_copy['salt'] = msg_copy['salt'].hex()
+                    msg_copy['info'] = msg_copy['info'].hex()
+                    msg_copy['signature'] = msg_copy['signature'].hex()
+                    msg_copy['timestamp'] = msg_copy['timestamp'].hex()
                     # Ephemeral public key remains a PEM string
-                    if 'corrupted' in msg_copy:
-                        del msg_copy['corrupted']  # Remove corrupted flag if present
                     messages_to_save[user].append(msg_copy)
                 except AttributeError as ae:
                     logging.error(f"Failed to serialize message for {user}: {ae}")
@@ -338,12 +345,12 @@ def send_message_route():
         # Store the message
         message_entry = {
             'sender': sender,
-            'ciphertext': ciphertext,  # Pass bytes directly
-            'nonce': nonce.hex(),
-            'salt': salt.hex(),
-            'info': info.hex(),
-            'signature': signature.hex(),
-            'timestamp': timestamp.hex(),
+            'ciphertext': ciphertext,
+            'nonce': nonce,
+            'salt': salt,
+            'info': info,
+            'signature': signature,
+            'timestamp': timestamp,
             'ephemeral_public_key': ephemeral_public_pem  # Include ephemeral public key
         }
         messages.setdefault(recipient, []).append(message_entry)
@@ -362,8 +369,7 @@ def send_message_route():
 @app.route('/message/<int:msg_id>', methods=['GET'])
 def view_message(msg_id):
     """
-    Handles viewing of a specific message by its ID.
-    Verifies the signature and decrypts the message.
+    Handles viewing messages with ephemeral key exchange and enhanced signatures.
     """
     if 'username' not in session:
         return redirect(url_for('login'))
@@ -377,19 +383,13 @@ def view_message(msg_id):
         return redirect(url_for('inbox'))
 
     message = user_messages[msg_id]
-
-    # Check if the message is marked as corrupted
-    if message.get('corrupted', False):
-        flash('Corrupted message - Cannot be Displayed.')
-        return redirect(url_for('inbox'))
-
     sender = message['sender']
-    ciphertext = bytes.fromhex(message['ciphertext'])
-    nonce = bytes.fromhex(message['nonce'])
-    salt = bytes.fromhex(message['salt'])
-    info = bytes.fromhex(message['info'])
-    signature = bytes.fromhex(message['signature'])
-    timestamp = bytes.fromhex(message['timestamp'])
+    ciphertext = message['ciphertext']
+    nonce = message['nonce']
+    salt = message['salt']
+    info = message['info']
+    signature = message['signature']
+    timestamp = message['timestamp']
     ephemeral_public_pem = message['ephemeral_public_key']
 
     users = load_users()
@@ -410,12 +410,13 @@ def view_message(msg_id):
         sender_ephemeral_public_key = load_pem_public_key(
             ephemeral_public_pem.encode('utf-8')
         )
-    except Exception as e:
-        flash('Failed to load sender\'s public key.')
+    except ValueError as e:
+        flash('Failed to load sender\'s public key. The message may have been tampered with.')
         logging.error(f"Failed to load sender's ephemeral public key: {e}")
-        # Since signature verification requires a public key, we cannot proceed
-        # Log the failed attempt in signature_verification.log via digital_signature.py
-        verify_signature(ephemeral_public_pem, b'', b'', b'')  # Dummy call to trigger logging
+        return redirect(url_for('inbox'))
+    except Exception as e:
+        flash('An unexpected error occurred while loading sender\'s public key.')
+        logging.error(f"Unexpected error loading sender's ECDH public key: {e}")
         return redirect(url_for('inbox'))
 
     try:
@@ -424,12 +425,10 @@ def view_message(msg_id):
     except Exception as e:
         flash('Failed to derive shared secret.')
         logging.error(f"Failed to derive shared secret: {e}")
-        # Log the failed attempt in signature_verification.log via digital_signature.py
-        verify_signature(ephemeral_public_pem, b'', b'', b'')  # Dummy call to trigger logging
         return redirect(url_for('inbox'))
 
     try:
-        # Derive per-message key using HKDF
+        # Derive per-message key using HKDF (Conor)
         per_message_key = derive_per_message_key(shared_secret, salt, info)
     except Exception as e:
         flash('Failed to derive per-message encryption key.')
@@ -440,18 +439,15 @@ def view_message(msg_id):
         # Load sender's signature certificate
         sig_certificate_pem = users[sender]['sig_certificate']
         sig_certificate = x509.load_pem_x509_certificate(sig_certificate_pem.encode('utf-8'))
-        sender_sig_public_key_pem = sig_certificate.public_key().public_bytes(
-            Encoding.PEM,
-            PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8')
+        sender_sig_public_key = sig_certificate.public_key()
     except Exception as e:
         flash('Failed to load sender\'s signature certificate.')
         logging.error(f"Failed to load sender's signature certificate: {e}")
         return redirect(url_for('inbox'))
 
     try:
-        # Verify the signature with timestamp
-        if not verify_signature(sender_sig_public_key_pem, ciphertext, signature, timestamp):
+        # Verify the signature with timestamp (Siddarth)
+        if not verify_signature(sender_sig_public_key, ciphertext, signature, timestamp):
             flash('Signature verification failed.')
             return redirect(url_for('inbox'))
     except Exception as e:
@@ -461,10 +457,11 @@ def view_message(msg_id):
 
     try:
         # Check if the message timestamp is within an acceptable time window (e.g., 5 minutes)
+        # Convert timestamp bytes to string, then parse as datetime
         timestamp_str = timestamp.decode('utf-8')
         message_time = datetime.datetime.fromisoformat(timestamp_str)
-        current_time = datetime.datetime.utcnow()
-        time_difference = current_time - message_time
+        current_time = datetime.datetime.now(datetime.timezone.utc)
+        time_difference = current_time - message_time.replace(tzinfo=datetime.timezone.utc)
 
         if time_difference.total_seconds() > 300:  # 5 minutes
             flash('Message is outdated or replayed.')
@@ -479,7 +476,7 @@ def view_message(msg_id):
         return redirect(url_for('inbox'))
 
     try:
-        # Decrypt the message
+        # Decrypt the message (Conor)
         plaintext = decrypt_message(ciphertext, nonce, per_message_key)
     except Exception as e:
         flash('Message decryption failed.')

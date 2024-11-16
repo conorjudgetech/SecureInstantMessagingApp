@@ -1,0 +1,172 @@
+2024-11-16 15:54:10,545 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-11-16 15:54:10,546 INFO: [33mPress CTRL+C to quit[0m
+2024-11-16 15:54:10,548 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 15:54:10,662 WARNING:  * Debugger is active!
+2024-11-16 15:54:10,668 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 15:54:20,355 INFO: 127.0.0.1 - - [16/Nov/2024 15:54:20] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 15:54:21,513 INFO: 127.0.0.1 - - [16/Nov/2024 15:54:21] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:04:52,232 INFO: 127.0.0.1 - - [16/Nov/2024 16:04:52] "[32mGET / HTTP/1.1[0m" 302 -
+2024-11-16 16:04:52,250 INFO: 127.0.0.1 - - [16/Nov/2024 16:04:52] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:04:52,288 INFO: 127.0.0.1 - - [16/Nov/2024 16:04:52] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:05:02,904 INFO: 127.0.0.1 - - [16/Nov/2024 16:05:02] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:05:02,941 INFO: 127.0.0.1 - - [16/Nov/2024 16:05:02] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:14,134 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:14] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:12:14,138 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:14] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:14,176 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:14] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:18,618 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:18] "[32mPOST /register HTTP/1.1[0m" 302 -
+2024-11-16 16:12:18,636 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:18] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:12:18,656 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:18] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:30,231 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:30] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:12:30,235 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:30] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:30,270 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:30] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:36,066 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:36] "[32mPOST /register HTTP/1.1[0m" 302 -
+2024-11-16 16:12:36,085 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:36] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:12:36,100 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:36] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:44,993 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:44] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:12:45,013 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:45] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:12:45,028 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:45] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:46,270 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:46] "GET /send HTTP/1.1" 200 -
+2024-11-16 16:12:46,274 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:46] "[36mGET /send?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-11-16 16:12:46,274 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:46] "[36mGET /send?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:46,274 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:46] "[36mGET /send?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-11-16 16:12:46,290 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:46] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:12:54,383 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:54] "[32mPOST /send HTTP/1.1[0m" 302 -
+2024-11-16 16:12:54,399 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:54] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:12:54,414 INFO: 127.0.0.1 - - [16/Nov/2024 16:12:54] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:13:17,157 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:17] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-11-16 16:13:17,175 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:17] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:13:17,205 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:17] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:13:23,169 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:23] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:13:23,186 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:23] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:13:23,198 INFO: 127.0.0.1 - - [16/Nov/2024 16:13:23] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:20:14,580 INFO: 127.0.0.1 - - [16/Nov/2024 16:20:14] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:20:14,589 INFO: 127.0.0.1 - - [16/Nov/2024 16:20:14] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:22:52,265 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 16:22:52,561 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 16:22:52,786 WARNING:  * Debugger is active!
+2024-11-16 16:22:52,794 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 16:23:08,854 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 16:23:08,937 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 16:23:09,060 WARNING:  * Debugger is active!
+2024-11-16 16:23:09,066 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 16:31:10,221 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 16:31:10,535 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 16:31:10,657 WARNING:  * Debugger is active!
+2024-11-16 16:31:10,663 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 16:31:25,054 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 16:31:25,792 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 16:31:25,922 WARNING:  * Debugger is active!
+2024-11-16 16:31:25,928 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 16:32:16,759 INFO: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2024-11-16 16:32:16,759 INFO: [33mPress CTRL+C to quit[0m
+2024-11-16 16:32:16,761 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 16:32:16,874 WARNING:  * Debugger is active!
+2024-11-16 16:32:16,880 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 16:32:28,191 INFO: No user logged in. Redirecting to login.
+2024-11-16 16:32:28,192 INFO: 127.0.0.1 - - [16/Nov/2024 16:32:28] "[32mGET / HTTP/1.1[0m" 302 -
+2024-11-16 16:32:28,206 INFO: 127.0.0.1 - - [16/Nov/2024 16:32:28] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:32:28,209 INFO: 127.0.0.1 - - [16/Nov/2024 16:32:28] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:32,366 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:32] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:34:32,371 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:32] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:32,408 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:32] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:36,250 INFO: New user registered: 'alice'.
+2024-11-16 16:34:36,251 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:36] "[32mPOST /register HTTP/1.1[0m" 302 -
+2024-11-16 16:34:36,270 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:36] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:34:36,283 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:36] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:41,958 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:41] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:34:41,962 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:41] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:41,978 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:41] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:34:46,985 INFO: New user registered: 'bob'.
+2024-11-16 16:34:46,986 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:46] "[32mPOST /register HTTP/1.1[0m" 302 -
+2024-11-16 16:34:47,001 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:47] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:34:47,016 INFO: 127.0.0.1 - - [16/Nov/2024 16:34:47] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:05,967 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:05] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:35:05,972 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:05,987 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:05] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:13,106 WARNING: Registration attempt with existing username 'bob'.
+2024-11-16 16:35:13,107 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:13] "[32mPOST /register HTTP/1.1[0m" 302 -
+2024-11-16 16:35:13,117 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:13] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:35:13,138 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:13] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:28,918 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:28] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:35:28,942 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:28] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:33,123 INFO: User 'alice' logged in successfully.
+2024-11-16 16:35:33,123 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:33] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:35:33,140 INFO: User 'alice' accessed inbox with 0 message(s).
+2024-11-16 16:35:33,143 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:33] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:35:33,159 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:33] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:35:34,219 INFO: User 'alice' logged out.
+2024-11-16 16:35:34,221 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:34] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-11-16 16:35:34,239 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:34] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:35:34,257 INFO: 127.0.0.1 - - [16/Nov/2024 16:35:34] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:04,350 WARNING: Failed login attempt for user 'bob'. 5 attempts remaining.
+2024-11-16 16:36:04,351 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:04] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:04,368 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:04] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:04,380 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:04] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:11,652 WARNING: Failed login attempt for user 'bob'. 4 attempts remaining.
+2024-11-16 16:36:11,653 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:11] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:11,668 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:11] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:11,698 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:11] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:14,514 WARNING: Failed login attempt for user 'bob'. 3 attempts remaining.
+2024-11-16 16:36:14,515 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:14] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:14,532 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:14] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:14,546 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:14] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:17,295 WARNING: Failed login attempt for user 'bob'. 2 attempts remaining.
+2024-11-16 16:36:17,295 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:17] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:17,312 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:17] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:17,324 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:17] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:23,262 WARNING: Failed login attempt for user 'bob'. 1 attempts remaining.
+2024-11-16 16:36:23,263 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:23] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:23,276 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:23] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:23,290 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:23] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:36:29,750 WARNING: Locked account login attempt for user 'bob'.
+2024-11-16 16:36:29,751 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:29] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:36:29,768 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:29] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:36:29,786 INFO: 127.0.0.1 - - [16/Nov/2024 16:36:29] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:07,852 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:07] "GET /register HTTP/1.1" 200 -
+2024-11-16 16:37:07,856 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:07,886 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:07] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:08,668 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:08] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:37:08,690 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:08] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:15,149 INFO: User 'alice' logged in successfully.
+2024-11-16 16:37:15,149 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:15] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:37:15,166 INFO: User 'alice' accessed inbox with 0 message(s).
+2024-11-16 16:37:15,167 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:15] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:37:15,188 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:15] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:16,293 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:16] "GET /send HTTP/1.1" 200 -
+2024-11-16 16:37:16,299 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:16] "[36mGET /send?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:16,299 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:16] "[36mGET /send?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-11-16 16:37:16,300 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:16] "[36mGET /send?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-11-16 16:37:16,313 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:16] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:24,961 INFO: User 'alice' sent a message to 'bob'.
+2024-11-16 16:37:24,963 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:24] "[32mPOST /send HTTP/1.1[0m" 302 -
+2024-11-16 16:37:24,978 INFO: User 'alice' accessed inbox with 0 message(s).
+2024-11-16 16:37:24,979 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:24] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:37:24,996 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:24] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:29,851 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:29] "GET /send HTTP/1.1" 200 -
+2024-11-16 16:37:29,857 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:29] "[36mGET /send?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:29,858 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:29] "[36mGET /send?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1[0m" 304 -
+2024-11-16 16:37:29,858 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:29] "[36mGET /send?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1[0m" 304 -
+2024-11-16 16:37:29,874 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:29] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:35,764 INFO: User 'alice' accessed inbox with 0 message(s).
+2024-11-16 16:37:35,765 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:35] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:37:35,769 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:35] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:35,786 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:35] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:44,836 INFO: User 'alice' logged out.
+2024-11-16 16:37:44,837 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:44] "[32mGET /logout HTTP/1.1[0m" 302 -
+2024-11-16 16:37:44,857 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:44] "GET /login HTTP/1.1" 200 -
+2024-11-16 16:37:44,875 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:44] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 16:37:51,614 INFO: User 'bob' logged in successfully.
+2024-11-16 16:37:51,615 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:51] "[32mPOST /login HTTP/1.1[0m" 302 -
+2024-11-16 16:37:51,632 INFO: User 'bob' accessed inbox with 1 message(s).
+2024-11-16 16:37:51,632 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:51] "GET /inbox HTTP/1.1" 200 -
+2024-11-16 16:37:51,645 INFO: 127.0.0.1 - - [16/Nov/2024 16:37:51] "[36mGET /static/style.css HTTP/1.1[0m" 304 -
+2024-11-16 17:07:18,132 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 17:07:19,039 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 17:07:19,238 WARNING:  * Debugger is active!
+2024-11-16 17:07:19,245 INFO:  * Debugger PIN: 552-244-645
+2024-11-16 17:09:15,931 INFO:  * Detected change in '/Users/conor/Documents/GitHub/SecureInstantMessagingApp/app.py', reloading
+2024-11-16 17:09:16,910 INFO:  * Restarting with watchdog (fsevents)
+2024-11-16 17:09:17,037 WARNING:  * Debugger is active!
+2024-11-16 17:09:17,044 INFO:  * Debugger PIN: 552-244-645

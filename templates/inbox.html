@@ -1,17 +1,24 @@
 {% extends "base.html" %}
-{% block title %}Inbox{% endblock %}
+
 {% block content %}
-<h1>Inbox</h1>
-<p>Welcome, {{ session['username'] }}!</p>
-<ul>
-    {% for message in messages %}
-        <li>
-            From: {{ message['sender'] }}
-            <a href="{{ url_for('view_message', msg_id=loop.index0) }}">View Message</a>
-        </li>
-    {% else %}
-        <li>No messages.</li>
-    {% endfor %}
-</ul>
-<p><a href="{{ url_for('send_message') }}">Send a Message</a> | <a href="{{ url_for('logout') }}">Logout</a></p>
+<h2>Inbox</h2>
+<p><a href="{{ url_for('send_message_route') }}">Send a Message</a> | <a href="{{ url_for('logout') }}">Logout</a></p>
+
+{% if messages %}
+    <ul>
+        {% for msg in messages %}
+            <li>
+                <strong>From:</strong> {{ msg.sender }} <br>
+                {% if msg.valid %}
+                    <a href="{{ url_for('view_message', msg_id=loop.index0) }}">View Message</a>
+                {% else %}
+                    <em>Corrupted Message - Cannot be Displayed</em>
+                {% endif %}
+                <hr>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No messages.</p>
+{% endif %}
 {% endblock %}

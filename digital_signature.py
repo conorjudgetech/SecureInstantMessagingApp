@@ -1,3 +1,4 @@
+# digital_signature.py
 # Siddarth: Digital Signatures with Certificates and Audit Logging
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
@@ -14,6 +15,14 @@ from cryptography.hazmat.primitives.serialization import (
 from cryptography import x509
 import datetime
 import json
+import logging
+
+# Configure logging for digital_signature.py
+logging.basicConfig(
+    filename='signature_verification.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s'
+)
 
 def generate_signature_key_pair(username):
     """
@@ -43,40 +52,41 @@ def generate_signature_key_pair(username):
 
     return private_key, certificate
 
-def sign_message(private_key, message):
+def sign_message(private_key, ciphertext):
     """
-    Sign the message with the private key and include a timestamp.
+    Sign the ciphertext with the private key and include a timestamp.
     Returns the signature and timestamp.
     """
-    timestamp = datetime.datetime.utcnow().isoformat().encode()
-    data_to_sign = timestamp + b'||' + message
+    timestamp = datetime.datetime.utcnow().isoformat().encode('utf-8')
+    data_to_sign = ciphertext + timestamp  # Ensure consistency with verification
     signature = private_key.sign(data_to_sign)
     return signature, timestamp
 
-def verify_signature(public_key, message, signature, timestamp):
+def verify_signature(public_key_pem, ciphertext, signature, timestamp):
     """
     Verify the message signature with the public key and log the attempt.
     Returns True if verification succeeds, False otherwise.
     """
-    data_to_verify = timestamp + b'||' + message
     try:
+        public_key = Ed25519PublicKey.from_public_bytes(public_key_pem.encode('utf-8'))
+        data_to_verify = ciphertext + timestamp  # Must match sign_message
         public_key.verify(signature, data_to_verify)
-        log_signature_verification(public_key, True)
+        
+        # Log successful verification
+        log_entry = {
+            "public_key": public_key_pem,
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "success": True
+        }
+        logging.info(json.dumps(log_entry))
         return True
-    except Exception:
-        log_signature_verification(public_key, False)
+    except Exception as e:
+        # Log failed verification with error message
+        log_entry = {
+            "public_key": public_key_pem,
+            "timestamp": datetime.datetime.utcnow().isoformat(),
+            "success": False,
+            "error": str(e)
+        }
+        logging.error(json.dumps(log_entry))
         return False
-
-def log_signature_verification(public_key, success):
-    """
-    Log signature verification attempts for auditing.
-    """
-    log_entry = {
-        'public_key': public_key.public_bytes(
-            Encoding.PEM, PublicFormat.SubjectPublicKeyInfo
-        ).decode('utf-8'),
-        'timestamp': datetime.datetime.utcnow().isoformat(),
-        'success': success
-    }
-    with open('signature_verification.log', 'a') as f:
-        f.write(json.dumps(log_entry) + '\n')
