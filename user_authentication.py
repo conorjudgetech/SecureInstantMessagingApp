@@ -28,7 +28,7 @@ def save_users(users):
     Save user data to the JSON file.
     """
     with open(USER_DATA_FILE, 'w') as f:
-        json.dump(users, f)
+        json.dump(users, f, indent=4)
 
 def hash_password(password):
     """

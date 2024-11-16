@@ -86,7 +86,7 @@ def save_messages(messages):
             # Ephemeral public key remains a PEM string
             messages_to_save[user].append(msg_copy)
     with open(MESSAGE_DATA_FILE, 'w') as f:
-        json.dump(messages_to_save, f)
+        json.dump(messages_to_save, f, indent=4)
 
 # Load users and messages from JSON files
 users = load_users()
