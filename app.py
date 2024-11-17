@@ -1,3 +1,4 @@
+import re
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 import json
@@ -43,6 +44,7 @@ app.config.update(
 # File paths for data storage
 USER_DATA_FILE = 'users.json'
 MESSAGE_DATA_FILE = 'messages.json'
+
 
 def load_messages():
     """
@@ -102,21 +104,53 @@ def index():
     else:
         return redirect(url_for('login'))
 
+# Strong password validation
+def is_strong_password(password):
+    """
+    Validates the strength of the password.
+    - At least 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one digit
+    - At least one special character
+    """
+    if len(password) < 8:
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"\d", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
 # Craig: User Registration with Account Lockout
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """
-    Handles user registration with certificate generation.
+    Handles user registration with certificate generation and strong password enforcement.
     """
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form['username'].strip()
+        password = request.form['password'].strip()
 
         users = load_users()
+
+        # Check for empty username
+        if not username:
+            flash('Username cannot be empty.')
+            return redirect(url_for('register'))
 
         # Check if username already exists
         if username in users:
             flash('Username already exists.')
+            return redirect(url_for('register'))
+
+        # Enforce strong password
+        if not is_strong_password(password):
+            flash('Password must be at least 8 characters long and include uppercase letters, lowercase letters, digits, and special characters.')
             return redirect(url_for('register'))
 
         # Hash the password
@@ -191,13 +225,13 @@ def login():
                 increment_failed_attempts(username)
                 remaining_attempts = 5 - user.get('failed_attempts', 0)
                 if remaining_attempts > 0:
-                    flash(f'Invalid username or password. You have {remaining_attempts} more attempt(s) before your account is locked.')
+                    flash(f'Invalid password. You have {remaining_attempts} more attempt(s) before your account is locked.')
                 else:
                     flash('Your account has been locked due to multiple failed login attempts. Please contact support.')
                 return redirect(url_for('login'))
         else:
             # Username not found
-            flash('Invalid username or password.')
+            flash('Invalid username.')
             return redirect(url_for('login'))
 
     return render_template('login.html')
