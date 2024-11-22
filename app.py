@@ -30,6 +30,7 @@ from digital_signature import (
 )
 from cryptography import x509
 
+# Conor
 # Initialize Flask application
 app = Flask(__name__)
 app.secret_key = os.urandom(16)  # Secret key for session management
@@ -41,11 +42,12 @@ app.config.update(
     # SESSION_COOKIE_SECURE=True  # Uncomment if running over HTTPS
 )
 
+# Conor
 # File paths for data storage
 USER_DATA_FILE = 'users.json'
 MESSAGE_DATA_FILE = 'messages.json'
 
-
+# Conor
 def load_messages():
     """
     Load messages from the JSON file.
@@ -69,6 +71,7 @@ def load_messages():
         # Return empty dictionary if file not found or invalid JSON
         return {}
 
+# Conor
 def save_messages(messages):
     """
     Save messages to the JSON file.
@@ -90,10 +93,12 @@ def save_messages(messages):
     with open(MESSAGE_DATA_FILE, 'w') as f:
         json.dump(messages_to_save, f, indent=4)
 
+# Conor
 # Load users and messages from JSON files
 users = load_users()
 messages = load_messages()
 
+# Conor
 @app.route('/')
 def index():
     """
@@ -104,6 +109,7 @@ def index():
     else:
         return redirect(url_for('login'))
 
+# Craig: User Registration with Account Lockout
 # Strong password validation
 def is_strong_password(password):
     """
@@ -236,6 +242,7 @@ def login():
 
     return render_template('login.html')
 
+# Conor
 # Logout Route
 @app.route('/logout')
 def logout():
@@ -462,7 +469,7 @@ def view_message(msg_id):
         return redirect(url_for('inbox'))
 
     try:
-        # Check if the message timestamp is within an acceptable time window (e.g., 5 minutes)
+        # Check if the message timestamp is within an acceptable time window
         message_time = datetime.datetime.fromisoformat(timestamp.decode())
         current_time = datetime.datetime.utcnow()
         time_difference = current_time - message_time
